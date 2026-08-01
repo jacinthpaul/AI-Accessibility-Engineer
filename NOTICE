@@ -1,0 +1,30 @@
+AI Accessibility Engineer
+Copyright 2026 Jacinth Paul and contributors
+
+This product includes software developed as part of the AI Accessibility Engineer
+project, licensed under the Apache License, Version 2.0.
+
+---
+
+Third-party components
+======================
+
+This project depends on, but does not modify, the following components. Their
+licenses apply to those components only, not to this project's own source.
+
+axe-core (https://github.com/dequelabs/axe-core)
+  Copyright Deque Systems, Inc.
+  Licensed under the Mozilla Public License, Version 2.0 (MPL-2.0).
+
+  MPL-2.0 is a file-level copyleft licence. Because this project uses axe-core as an
+  unmodified dependency, the obligation applies only to axe-core's own files, and this
+  project's source remains under Apache-2.0. Should any axe-core file ever be modified
+  and redistributed as part of this project, that modified file must remain MPL-2.0 and
+  its source made available.
+
+Playwright (https://github.com/microsoft/playwright)
+  Copyright Microsoft Corporation.
+  Licensed under the Apache License, Version 2.0.
+
+Full licence texts are available in each package's directory under node_modules/, and
+at the URLs above.

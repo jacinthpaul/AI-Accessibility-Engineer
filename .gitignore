@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Scan artifacts
+a11y-report.*
+.a11y-cache/
+
+# Local tooling / editor state
+.claude/settings.local.json
+.vscode/
+.idea/
+.DS_Store
+
+# Secrets — never commit an API key
+.env
+.env.*
+!.env.example
