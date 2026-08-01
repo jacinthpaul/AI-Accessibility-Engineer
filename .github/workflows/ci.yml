@@ -38,4 +38,9 @@ jobs:
 
       - run: npm run build
 
+      # The integration tests drive a real browser against the fixtures. --with-deps
+      # pulls the shared libraries Chromium needs on a bare CI runner.
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - run: npm test

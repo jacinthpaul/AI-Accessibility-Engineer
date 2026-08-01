@@ -1,0 +1,40 @@
+<!doctype html>
+<!--
+  Fixture: the same content as violations.html, done correctly.
+
+  A scanner that finds problems is only half of the requirement — one that invents them
+  on correct markup is worse than useless, because every false positive costs a developer
+  the time to disprove it. The test suite asserts this page yields zero findings.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixture: accessible baseline</title>
+  </head>
+  <body>
+    <main>
+      <h1>Accessible baseline</h1>
+
+      <!-- 1.1.1: decorative image, correctly hidden from assistive technology. -->
+      <img
+        src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+        alt=""
+      />
+
+      <!-- 4.1.2: button with a discernible name. -->
+      <button type="button">Add to cart</button>
+
+      <!-- 4.1.2: input with a programmatically associated label. -->
+      <label for="email">Email address</label>
+      <input type="text" id="email" />
+
+      <!-- 1.4.3: #595959 on #ffffff is about 7:1, comfortably above the 4.5:1 floor. -->
+      <p style="color: #595959; background-color: #ffffff">
+        This paragraph meets the minimum contrast ratio.
+      </p>
+
+      <!-- 2.4.4: link purpose clear from its own text. -->
+      <a href="https://example.com">Read the full accessibility statement</a>
+    </main>
+  </body>
+</html>

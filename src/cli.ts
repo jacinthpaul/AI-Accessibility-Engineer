@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { Command } from 'commander';
 
+import { runScanCommand, type ScanCommandOptions } from './commands/scan-command.js';
 import { runWcagCommand, type WcagCommandOptions } from './commands/wcag-command.js';
 import { DEFAULT_CONFIDENCE_FLOOR } from './findings.js';
 
@@ -38,13 +39,11 @@ program
     DEFAULT_CONFIDENCE_FLOOR,
   )
   .option('--fail-on <severity>', 'exit non-zero at or above this severity', 'serious')
-  .action((options: Record<string, unknown>) => {
-    // Phase 1 wires up capture + the deterministic pass behind this.
-    console.error('scan: not implemented yet (Phase 1)');
-    console.error(`  url:      ${String(options['url'])}`);
-    console.error(`  format:   ${String(options['format'])}`);
-    console.error(`  judgment: ${options['judgment'] === false ? 'off' : 'on'}`);
-    process.exitCode = 1;
+  .option('--level <level>', 'conformance level to scan: A | AA | AAA', 'AA')
+  .option('--headed', 'run with a visible browser window')
+  .option('--settle <ms>', 'extra wait after load, for client-rendered pages', parseInt)
+  .action(async (options: Omit<ScanCommandOptions, 'toolVersion'>) => {
+    process.exitCode = await runScanCommand({ ...options, toolVersion: pkg.version });
   });
 
 program

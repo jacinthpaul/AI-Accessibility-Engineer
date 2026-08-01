@@ -1,0 +1,40 @@
+<!doctype html>
+<!--
+  Fixture: known WCAG failures, all detectable by the deterministic pass.
+
+  Every failure here is labelled in fixtures/violations.expected.json, which the test
+  suite asserts against. Add a violation here without labelling it there and the tests
+  fail — that is deliberate, so the fixture and its ground truth cannot drift apart.
+
+  Deliberately NOT included: anything only the judgment pass can catch (unhelpful-but-
+  present alt text, vague link text). Those belong in the Phase 2 fixtures, where they
+  are scored on precision and recall rather than pass/fail.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixture: known accessibility violations</title>
+  </head>
+  <body>
+    <main>
+      <h1>Known violations</h1>
+
+      <!-- 1.1.1 Non-text Content: image with no alt attribute at all. -->
+      <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" />
+
+      <!-- 4.1.2 Name, Role, Value: control with no accessible name. -->
+      <button></button>
+
+      <!-- 4.1.2 Name, Role, Value: input with no associated label. -->
+      <input type="text" />
+
+      <!-- 1.4.3 Contrast (Minimum): #999 on #fff is about 2.85:1, below the 4.5:1 floor. -->
+      <p style="color: #999999; background-color: #ffffff">
+        This paragraph does not meet the minimum contrast ratio.
+      </p>
+
+      <!-- 2.4.4 Link Purpose (In Context): anchor with no discernible text. -->
+      <a href="https://example.com"></a>
+    </main>
+  </body>
+</html>

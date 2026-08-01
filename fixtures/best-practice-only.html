@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  Fixture: axe best-practice rules fire here, but no WCAG success criterion is failed.
+
+  This page skips a heading level and has no landmark regions. axe reports both
+  (heading-order, landmark-one-main, region), and they are reasonable advice — but no
+  WCAG 2.2 criterion requires either. A scanner that counts them as conformance failures
+  reports three violations on a page that has none.
+
+  The test suite asserts this page yields zero WCAG findings and a non-zero
+  best-practice count.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixture: best-practice issues only</title>
+  </head>
+  <body>
+    <h1>Heading level one</h1>
+
+    <!-- Skips h2. Advisory under axe's heading-order rule; not a WCAG failure. -->
+    <h3>Heading level three</h3>
+
+    <p style="color: #595959; background-color: #ffffff">
+      All content on this page passes WCAG 2.2 A and AA.
+    </p>
+
+    <a href="https://example.com">Read the accessibility statement</a>
+  </body>
+</html>

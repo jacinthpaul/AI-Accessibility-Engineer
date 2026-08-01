@@ -6,9 +6,9 @@ Automated tools reliably catch roughly 30–45% of WCAG success criteria. The re
 
 > ## ⚠️ Status: early development
 >
-> **`scan` is not implemented yet.** Phase 0 (foundations) is complete; the scanner itself lands in Phase 1.
+> **The deterministic scanner works.** `a11y-engineer --url <url>` runs axe-core against WCAG 2.2 and reports findings — no API key required.
 >
-> What works today: the WCAG grounding data and the `wcag` lookup command. See [Roadmap](#roadmap).
+> **The judgment pass does not exist yet** (Phase 2), so the headline feature of this project is still unbuilt. See [Roadmap](#roadmap).
 
 ## Why another accessibility tool
 
@@ -78,15 +78,41 @@ $ a11y-engineer wcag 2.4.11
 
 **Exit codes:** `0` valid · `1` not found or rejected · `2` bad usage. `--check` is scriptable in CI.
 
-### `scan` — _not implemented yet (Phase 1)_
-
-The intended interface:
+### `scan` — scan a page
 
 ```bash
-a11y-engineer --url http://localhost:3000                  # both passes
-a11y-engineer --url http://localhost:3000 --no-judgment    # axe only, no API key
-a11y-engineer --url http://localhost:3000 --format sarif -o results.sarif
+a11y-engineer --url http://localhost:3000                   # scan a running dev server
+a11y-engineer --url http://localhost:3000 --format json     # machine-readable
+a11y-engineer --url http://localhost:3000 --level A         # level A only
+a11y-engineer --url http://localhost:3000 --fail-on critical
+a11y-engineer --url http://localhost:3000 --settle 2000     # wait for client rendering
 ```
+
+Example — scanning the bundled fixture of deliberate violations:
+
+```
+$ a11y-engineer --url file:///path/to/fixtures/violations.html
+
+  AI Accessibility Engineer  file:///path/to/fixtures/violations.html
+
+  CRITICAL Buttons must have discernible text
+           WCAG 4.1.2 Name, Role, Value (Level A)
+           Ensure buttons have discernible text
+           button
+           <button></button>
+           https://dequeuniversity.com/rules/axe/4.12/button-name
+
+  SERIOUS  Elements must meet minimum color contrast ratio thresholds
+           WCAG 1.4.3 Contrast (Minimum) (Level AA)
+           Ensure the contrast between foreground and background colors meets
+           WCAG 2 AA minimum contrast ratio thresholds
+           p
+           <p style="color: #999999; background-color: #ffffff"> This paragraph…
+
+  5 findings  3 critical  2 serious
+```
+
+**Exit codes:** `0` clean · `1` findings at or above `--fail-on` · `2` bad usage or scan error.
 
 | Flag                     | Purpose                                                       |
 | ------------------------ | ------------------------------------------------------------- |
@@ -98,8 +124,20 @@ a11y-engineer --url http://localhost:3000 --format sarif -o results.sarif
 | `--budget <usd>`         | Stop the judgment pass past this estimated spend              |
 | `--confidence-floor <n>` | Below this, findings are reported as `review` (default `0.7`) |
 | `--fail-on <severity>`   | Exit non-zero at or above this severity (default `serious`)   |
+| `--level <level>`        | Conformance level to scan: `A`, `AA` (default), `AAA`         |
+| `--headed`               | Run with a visible browser window                             |
+| `--settle <ms>`          | Extra wait after load, for client-rendered pages              |
 
-Running it today prints `not implemented yet (Phase 1)` and exits 1.
+`--model` and `--budget` are accepted but inert until the judgment pass lands. Passing `--judgment` prints a notice saying so rather than silently ignoring it.
+
+### What a clean result means
+
+A scan reporting no failures is **not** a conformance claim. Automated testing reaches roughly a third of WCAG; the rest needs human judgment, which is exactly the gap this project is being built to narrow. The reporter says so on every clean run rather than letting a green tick imply more than it should.
+
+Two things are counted but deliberately kept out of the failure total:
+
+- **Best-practice issues.** axe rules like `heading-order` and `landmark-one-main` are reasonable advice, but no WCAG criterion requires them. Counting them as violations reports failures on a conformant page, so they are surfaced separately as advisory.
+- **Checks axe could not decide.** Usually contrast against a background image. These need a human — and are prime candidates for the judgment pass.
 
 ## How it will work
 
@@ -155,7 +193,8 @@ npm run build:wcag   # rewrites data/wcag.json — review the diff before commit
 
 ```bash
 npm install
-npm test           # unit tests
+npx playwright install chromium   # integration tests drive a real browser
+npm test
 npm run typecheck
 npm run lint
 npm run build
@@ -164,13 +203,25 @@ npm run format     # prettier --write
 
 CI runs format, lint, typecheck, build, and tests on Node 20, 22, and 24.
 
+### Fixtures
+
+`fixtures/` holds pages with deliberately labelled behaviour, and the integration tests assert against them:
+
+| Fixture                   | Asserts                                                           |
+| ------------------------- | ----------------------------------------------------------------- |
+| `violations.html`         | Every planted violation is found, mapped to the right criterion   |
+| `clean.html`              | Correct markup yields **zero** findings — the false-positive test |
+| `best-practice-only.html` | Advisory issues are counted but **not** reported as WCAG failures |
+
+`clean.html` matters as much as `violations.html`. A scanner that invents problems costs a developer the time to disprove each one, which is worse than missing them.
+
 ## Roadmap
 
 | Phase | Scope                                                              | Status  |
 | ----- | ------------------------------------------------------------------ | ------- |
 | 0     | Foundations: finding model, WCAG grounding data, CLI skeleton, CI  | ✅ Done |
-| 1     | Capture + deterministic pass + `pretty`/`json` reporters           | Next    |
-| 2     | Judgment pass (2 checks) + eval harness reporting precision/recall |         |
+| 1     | Capture + deterministic pass + `pretty`/`json` reporters           | ✅ Done |
+| 2     | Judgment pass (2 checks) + eval harness reporting precision/recall | Next    |
 | 3     | Remaining judgment checks                                          |         |
 | 4     | SARIF reporter + GitHub Action                                     |         |
 | 5     | Docs, demo, first npm release                                      |         |

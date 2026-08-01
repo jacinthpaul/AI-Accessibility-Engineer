@@ -57,7 +57,9 @@
     "build:wcag": "tsx scripts/build-wcag-data.ts"
   },
   "dependencies": {
-    "commander": "^14.0.1"
+    "@axe-core/playwright": "^4.12.1",
+    "commander": "^14.0.1",
+    "playwright": "^1.62.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
