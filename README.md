@@ -15,9 +15,9 @@ Automated tools reliably catch roughly 30–45% of WCAG success criteria. The re
 Most open-source scanners wrap axe-core and compete on reporting. This one is built around two things nothing else in the space does:
 
 1. **A judgment pass for the criteria automation can't test.** Not "an LLM rewords axe's error messages" — a set of narrow, per-criterion checks with their own evidence and confidence scoring.
-2. **Measured accuracy.** An eval harness scores each judgment check against labelled fixtures and reports precision and recall. Those numbers get published rather than asserted.
+2. **Measured accuracy.** An eval harness scores each judgment check against labelled fixtures and reports precision and recall. Those numbers get published rather than asserted. The harness is built; the numbers are not measured yet, so none are claimed here.
 
-It runs as a CLI and a GitHub Action, using **your own API key**. There is no hosted service, so there is no per-scan cost to anyone but you, and nothing to sign up for.
+It runs as a CLI, using **your own API key** — a GitHub Action follows in Phase 4. There is no hosted service, so there is no per-scan cost to anyone but you, and nothing to sign up for.
 
 ## Requirements
 
@@ -143,14 +143,16 @@ Two things are counted but deliberately kept out of the failure total:
 - **Best-practice issues.** axe rules like `heading-order` and `landmark-one-main` are reasonable advice, but no WCAG criterion requires them. Counting them as violations reports failures on a conformant page, so they are surfaced separately as advisory.
 - **Checks axe could not decide.** Usually contrast against a background image. These need a human — and are prime candidates for the judgment pass.
 
-## How it will work
+## How it works
 
 ```
 capture ──▶ deterministic pass ──▶ judgment pass ──▶ score ──▶ report
 (Playwright)     (axe-core)            (LLM)                 (pretty/json/sarif)
 ```
 
-**Capture** collects the DOM, the accessibility tree, screenshots, and a **focus-order trace** — tabbing through the page recording focus at each stop, which is what makes focus and keyboard-trap checks possible at all.
+**Capture** loads the page in Chromium at a fixed viewport and waits for it to settle, then hands the live page to both passes — each judgment check queries the DOM for its own evidence rather than working from one generic snapshot.
+
+The checks still to be built need more than the DOM: screenshots for focus visibility, and a **focus-order trace** — tabbing through the page recording focus at each stop, which is what makes focus and keyboard-trap checks possible at all. Collecting those is part of Phase 3.
 
 **Deterministic pass** runs axe-core against WCAG 2.2 A/AA. Solved problem; we normalise its output and move on.
 
@@ -205,7 +207,13 @@ npm run build
 npm run format     # prettier --write
 ```
 
-CI runs format, lint, typecheck, build, and tests on Node 20, 22, and 24.
+CI runs format, lint, typecheck, build, and tests on Node 20, 22, and 24. The tests need no API key — the judgment pass is driven by a scripted model client, so the suite is deterministic and offline.
+
+Where `npx playwright install` is unavailable, point `A11Y_CHROMIUM_PATH` at a system Chromium and the integration tests run against that instead:
+
+```bash
+A11Y_CHROMIUM_PATH=/path/to/chrome npm test
+```
 
 ### Fixtures
 
