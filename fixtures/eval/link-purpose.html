@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Eval fixture: link purpose in context (WCAG 2.4.4)</title>
+  </head>
+  <body>
+    <!--
+      Labelled ground truth for the link-purpose-in-context judgment check.
+      data-eval-label="violation" — link purpose is not determinable from name + context.
+      data-eval-label="ok"        — purpose is clear from the name, or rescued by context.
+      The label attribute is read by the eval harness only; it is never shown to the model.
+    -->
+    <main>
+      <h1>Newsletter archive</h1>
+
+      <!-- Violations: generic names with no disambiguating context -->
+      <p>
+        For more information about our services,
+        <a href="/services/consulting/enterprise" data-eval-label="violation">click here</a> and
+        <a href="/docs/whitepaper-2024.pdf" data-eval-label="violation">here</a>.
+      </p>
+      <p>
+        <a href="/blog/post-31" data-eval-label="violation">Read more</a>
+      </p>
+      <p>
+        Details are available at
+        <a href="https://example.com/p?id=88213&ref=x1" data-eval-label="violation"
+          >https://example.com/p?id=88213&amp;ref=x1</a
+        >.
+      </p>
+      <p>
+        <a href="/updates/latest" data-eval-label="violation">More</a>
+      </p>
+
+      <!-- OK: specific names, or generic names rescued by their list-item/sentence context -->
+      <ul>
+        <li>
+          Migrating to WCAG 2.2: what changed and why.
+          <a href="/blog/wcag-22-migration" data-eval-label="ok">Read more</a>
+        </li>
+        <li>
+          Our 2024 accessibility audit results, in full.
+          <a href="/blog/audit-2024" data-eval-label="ok">Read more</a>
+        </li>
+      </ul>
+      <p>
+        See our <a href="/pricing" data-eval-label="ok">Pricing</a> page, or
+        <a href="/contact" data-eval-label="ok">contact the sales team</a> directly.
+      </p>
+      <p>
+        <a href="/reports/annual-2024.pdf" data-eval-label="ok"
+          >Download the 2024 annual report (PDF, 2.1 MB)</a
+        >
+      </p>
+      <p>
+        <a href="https://github.com/example/scanner" data-eval-label="ok"
+          >View the source on GitHub</a
+        >
+      </p>
+    </main>
+  </body>
+</html>

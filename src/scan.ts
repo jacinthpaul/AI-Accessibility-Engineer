@@ -14,14 +14,25 @@ import {
   dropJudgmentConflicts,
   sortBySeverity,
   type ConformanceLevel,
+  type JudgmentUsage,
   type ScanResult,
   type Severity,
 } from './findings.js';
+import type { JudgmentCheck } from './judgment/checks/check.js';
+import { DEFAULT_CHECKS } from './judgment/index.js';
+import type { JudgmentModelClient } from './judgment/model.js';
+import { runJudgmentPass } from './judgment/runner.js';
 
 export interface ScanOptions extends CaptureOptions {
   level?: ConformanceLevel;
-  /** Phase 2. When false — the default today — only the deterministic pass runs. */
+  /** Run the LLM judgment pass. Requires `judgmentClient`. */
   judgment?: boolean;
+  /** The model client the judgment pass uses. Injected so tests and evals can substitute. */
+  judgmentClient?: JudgmentModelClient;
+  /** Override the default check set. */
+  judgmentChecks?: JudgmentCheck[];
+  /** Estimated-spend ceiling in USD for the judgment pass. */
+  budgetUsd?: number;
   confidenceFloor?: number;
 }
 
@@ -29,6 +40,8 @@ export interface ScanOutcome {
   result: ScanResult;
   bestPracticeCount: number;
   incompleteCount: number;
+  /** Checks the judgment pass had to skip, and why. */
+  judgmentWarnings: string[];
 }
 
 export async function scan(url: string, options: ScanOptions = {}): Promise<ScanOutcome> {
@@ -39,9 +52,21 @@ export async function scan(url: string, options: ScanOptions = {}): Promise<Scan
     const captured = await capturePage(session, url, options);
     const axe = await runAxePass(captured.page, { level });
 
-    // The judgment pass slots in here in Phase 2. Its findings join the same array and
-    // go through the same reconciliation below.
     let findings = [...axe.findings];
+    let usage: JudgmentUsage | undefined;
+    const judgmentWarnings: string[] = [];
+
+    if (options.judgment === true && options.judgmentClient !== undefined) {
+      const judgment = await runJudgmentPass(captured.page, {
+        client: options.judgmentClient,
+        checks: options.judgmentChecks ?? DEFAULT_CHECKS,
+        level,
+        ...(options.budgetUsd !== undefined && { budgetUsd: options.budgetUsd }),
+      });
+      findings.push(...judgment.findings);
+      usage = judgment.usage;
+      judgmentWarnings.push(...judgment.warnings);
+    }
 
     findings = dropJudgmentConflicts(findings);
     findings = findings.map((f) =>
@@ -54,9 +79,11 @@ export async function scan(url: string, options: ScanOptions = {}): Promise<Scan
         url: captured.finalUrl,
         scannedAt: new Date().toISOString(),
         findings: sortBySeverity(findings),
+        ...(usage !== undefined && { usage }),
       },
       bestPracticeCount: axe.bestPracticeCount,
       incompleteCount: axe.incompleteCount,
+      judgmentWarnings,
     };
   } finally {
     await session.close();

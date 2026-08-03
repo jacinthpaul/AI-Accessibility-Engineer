@@ -87,8 +87,23 @@ function formatFinding(f: Finding, style: ReturnType<typeof makeStyler>): string
  * advisory issues must not read as flawless — the advice is the only thing left to act
  * on, so hiding it when the news is good is exactly when it matters most.
  */
-function footnotes(options: PrettyOptions, style: ReturnType<typeof makeStyler>): string[] {
+function footnotes(
+  result: ScanResult,
+  options: PrettyOptions,
+  style: ReturnType<typeof makeStyler>,
+): string[] {
   const lines: string[] = [];
+
+  if (result.usage !== undefined) {
+    const u = result.usage;
+    const cost = `$${u.estimatedCostUsd.toFixed(4)}`;
+    const budgetNote = u.budgetExhausted === true ? ' — budget reached, pass incomplete' : '';
+    lines.push(
+      style.dim(
+        `  Judgment pass: ${String(u.inputTokens)} in / ${String(u.outputTokens)} out tokens, ~${cost} estimated${budgetNote}.`,
+      ),
+    );
+  }
 
   if (options.bestPracticeCount !== undefined && options.bestPracticeCount > 0) {
     lines.push(
@@ -119,7 +134,7 @@ export function renderPretty(result: ScanResult, options: PrettyOptions = {}): s
   if (result.findings.length === 0) {
     lines.push(`  ${style.bold('No WCAG failures detected.')}`);
     lines.push('');
-    lines.push(...footnotes(options, style));
+    lines.push(...footnotes(result, options, style));
     lines.push('');
     lines.push(
       style.dim(
@@ -141,7 +156,7 @@ export function renderPretty(result: ScanResult, options: PrettyOptions = {}): s
     .map((s) => style.sev(s, `${String(counts[s])} ${s}`));
 
   lines.push(`  ${style.bold(`${String(result.findings.length)} findings`)}  ${parts.join('  ')}`);
-  lines.push(...footnotes(options, style));
+  lines.push(...footnotes(result, options, style));
   lines.push('');
 
   return lines.join('\n');

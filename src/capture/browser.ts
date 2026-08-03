@@ -16,6 +16,12 @@ export interface CaptureOptions {
   viewport?: { width: number; height: number };
   /** Extra settle time after load, for pages that hydrate or animate in. */
   settleMs?: number;
+  /**
+   * Chromium binary to drive, instead of the one Playwright downloads. Defaults to
+   * `A11Y_CHROMIUM_PATH`. Needed where that download is unavailable — locked-down CI,
+   * containers with a preinstalled browser, distro-packaged Chromium.
+   */
+  executablePath?: string;
 }
 
 export const DEFAULT_VIEWPORT = { width: 1280, height: 800 };
@@ -35,7 +41,12 @@ export interface CaptureSession {
 }
 
 export async function openSession(options: CaptureOptions = {}): Promise<CaptureSession> {
-  const browser = await chromium.launch({ headless: options.headed !== true });
+  const executablePath = options.executablePath ?? process.env.A11Y_CHROMIUM_PATH;
+
+  const browser = await chromium.launch({
+    headless: options.headed !== true,
+    ...(executablePath !== undefined && executablePath !== '' && { executablePath }),
+  });
 
   // axe-core/playwright requires a browser context rather than a bare page, and a fixed
   // viewport keeps layout-dependent rules (contrast, reflow, target size) reproducible

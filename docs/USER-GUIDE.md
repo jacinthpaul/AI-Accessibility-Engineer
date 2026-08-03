@@ -2,7 +2,7 @@
 
 A command-line WCAG 2.2 scanner that pairs **axe-core** (the industry-standard deterministic engine) with an **LLM judgment pass** for the accessibility criteria automation cannot reach.
 
-> **Where the project stands:** the deterministic scanner and the WCAG lookup tool work today, with no API key. The judgment pass — the headline feature — is under development (Phase 2 of the [roadmap](../README.md#roadmap)). Flags that belong to it (`--model`, `--budget`, `--confidence-floor`) are accepted but inert until it lands.
+> **Where the project stands:** the deterministic scanner and the WCAG lookup tool work with no API key. The judgment pass runs its first two checks — alt-text meaningfulness (1.1.1) and link purpose in context (2.4.4) — when `ANTHROPIC_API_KEY` is set; the remaining checks land in Phase 3 of the [roadmap](../README.md#roadmap).
 
 ---
 
@@ -12,8 +12,8 @@ Automated accessibility tools reliably test roughly 30–45% of WCAG success cri
 
 This tool targets that gap with a two-pass design:
 
-1. **Deterministic pass** — axe-core runs against WCAG 2.2 A/AA. Fast, free, no API key, no false positives worth arguing about. This works today.
-2. **Judgment pass** _(in development)_ — a set of narrow, per-criterion LLM checks, each with its own evidence gathering and confidence scoring, using **your own Anthropic API key**. Not "here's a page, find problems" — each check asks one specific question about specific elements.
+1. **Deterministic pass** — axe-core runs against WCAG 2.2 A/AA. Fast, free, no API key, no false positives worth arguing about.
+2. **Judgment pass** — a set of narrow, per-criterion LLM checks, each with its own evidence gathering and confidence scoring, using **your own Anthropic API key**. Not "here's a page, find problems" — each check asks one specific question about specific elements. Two checks ship today; more are coming.
 
 There is no hosted service, no sign-up, and no per-scan cost to anyone but you.
 
@@ -33,7 +33,7 @@ Four rules are enforced in code, not requested in a prompt:
 **Requirements:**
 
 - Node.js **20 or newer**
-- An `ANTHROPIC_API_KEY` environment variable — _only_ for the judgment pass. Everything documented as working today needs no key.
+- An `ANTHROPIC_API_KEY` environment variable — _only_ for the judgment pass. The deterministic scan and the `wcag` lookup need no key.
 
 Not yet published to npm. From source:
 
@@ -76,19 +76,29 @@ a11y-engineer --url http://localhost:3000 --headed
 
 ### Flags
 
-| Flag                     | Purpose                                                      | Default         |
-| ------------------------ | ------------------------------------------------------------ | --------------- |
-| `--url <url>`            | Page to scan (required)                                      | —               |
-| `--format <fmt>`         | `pretty`, `json`, or `sarif`                                 | `pretty`        |
-| `-o, --out <path>`       | Write the report to a file instead of stdout                 | stdout          |
-| `--level <level>`        | Conformance level: `A`, `AA`, `AAA`                          | `AA`            |
-| `--fail-on <severity>`   | Exit non-zero at or above this severity                      | `serious`       |
-| `--settle <ms>`          | Extra wait after `load`, for client-rendered pages           | `0`             |
-| `--headed`               | Run with a visible browser window                            | headless        |
-| `--no-judgment`          | Deterministic pass only — no API key needed                  | (current mode)  |
-| `--model <model>`        | Judgment model _(inert until Phase 2)_                       | `claude-opus-5` |
-| `--budget <usd>`         | Stop the judgment pass past this estimated spend _(Phase 2)_ | —               |
-| `--confidence-floor <n>` | Below this, judgment findings become `review` _(Phase 2)_    | `0.7`           |
+| Flag                     | Purpose                                                | Default         |
+| ------------------------ | ------------------------------------------------------ | --------------- |
+| `--url <url>`            | Page to scan (required)                                | —               |
+| `--format <fmt>`         | `pretty`, `json`, or `sarif`                           | `pretty`        |
+| `-o, --out <path>`       | Write the report to a file instead of stdout           | stdout          |
+| `--level <level>`        | Conformance level: `A`, `AA`, `AAA`                    | `AA`            |
+| `--fail-on <severity>`   | Exit non-zero at or above this severity                | `serious`       |
+| `--settle <ms>`          | Extra wait after `load`, for client-rendered pages     | `0`             |
+| `--headed`               | Run with a visible browser window                      | headless        |
+| `--no-judgment`          | Deterministic pass only — no API key needed            | judgment on     |
+| `--model <model>`        | Model used for the judgment pass                       | `claude-opus-5` |
+| `--budget <usd>`         | Stop the judgment pass past this estimated spend       | no ceiling      |
+| `--confidence-floor <n>` | Below this, judgment findings are reported as `review` | `0.7`           |
+
+The judgment pass runs by default, but only when `ANTHROPIC_API_KEY` (or an `ant auth login` profile) is available. Without one, the scan prints a notice and runs the deterministic pass alone — it neither fails nor silently pretends the judgment pass ran.
+
+If a check cannot reach a verdict, the scan prints which check was skipped and why:
+
+```
+Warning: Check link-purpose-in-context skipped (error): connection reset
+```
+
+That is deliberate. A skipped check is a gap in coverage, and a report that hides it would overstate what was actually examined.
 
 ### Exit codes
 
@@ -162,36 +172,73 @@ Notes:
 
 ---
 
-## 6. The judgment pass (what's coming)
+## 6. The judgment pass
 
-When Phase 2 lands, `scan` will additionally run per-criterion LLM checks, starting with two and growing to:
+With an API key set, `scan` additionally runs per-criterion LLM checks:
 
-| Check                            | Criterion      |
-| -------------------------------- | -------------- |
-| Alt text meaningfulness          | 1.1.1          |
-| Decorative vs informative images | 1.1.1          |
-| Link purpose in context          | 2.4.4          |
-| Heading structure semantics      | 1.3.1 / 2.4.6  |
-| Reading order vs visual order    | 1.3.2          |
-| Focus visibility                 | 2.4.7 / 2.4.11 |
-| Control name quality             | 4.1.2          |
+| Check                            | Criterion      | Status  |
+| -------------------------------- | -------------- | ------- |
+| Alt text meaningfulness          | 1.1.1          | Shipped |
+| Link purpose in context          | 2.4.4          | Shipped |
+| Decorative vs informative images | 1.1.1          | Planned |
+| Heading structure semantics      | 1.3.1 / 2.4.6  | Planned |
+| Reading order vs visual order    | 1.3.2          | Planned |
+| Focus visibility                 | 2.4.7 / 2.4.11 | Planned |
+| Control name quality             | 4.1.2          | Planned |
 
-You'll control it with the flags that exist today: `--model` picks the Claude model, `--budget` caps estimated spend (the pass stops cleanly when exceeded and says so in the report), and `--confidence-floor` tunes how sure the model must be before a finding is asserted rather than marked `review`. Reports will include measured token usage and estimated cost.
+**Alt text meaningfulness** looks at images that already have alt text — axe has confirmed the attribute exists — and asks whether that text works as a substitute for the image. `alt="IMG_4032.jpg"` and `alt="image"` pass every automated tool on the market and fail a real user.
 
-Accuracy will be measured, not asserted: an eval harness scores every judgment check against labelled fixtures and reports precision and recall, and those numbers get published with the project.
+**Link purpose in context** looks at links that already have a name and asks whether the destination is determinable. WCAG 2.4.4 lets the surrounding sentence or list item supply the missing information, so the check sees that context too: "Read more" inside a list item that names the article is fine, and the same words alone in a paragraph are not.
+
+### Controlling cost
+
+`--model` picks the model (default `claude-opus-5`). `--budget 0.50` stops the pass once estimated spend passes that ceiling; the report says the pass was cut short rather than quietly returning partial results. Every report includes measured token usage and an estimated cost:
+
+```
+  Judgment pass: 4182 in / 1203 out tokens, ~$0.0510 estimated.
+```
+
+### Reading a judgment finding
+
+Judgment findings show two things deterministic findings do not — the model's reasoning, and its confidence:
+
+```
+  SERIOUS  Alt text repeats the filename instead of describing the image
+           WCAG 1.1.1 Non-text Content (Level A)
+           ...
+           Why: The alt text is the source filename, which conveys nothing.
+           Confidence: 0.94
+```
+
+A finding below `--confidence-floor` (default `0.7`) is reported with severity `review` rather than asserted as a violation, and `review` findings never fail a build. If the judgment pass and axe both flag the same element for the same criterion, the judgment finding is dropped — axe wins.
+
+### Measured accuracy
+
+Accuracy is measured, not asserted. `npm run eval` scores each check against labelled fixtures in `fixtures/eval/` and reports precision, recall, and F1, printing every disagreement with the model's own rationale:
+
+```bash
+export ANTHROPIC_API_KEY=...
+npm run eval
+npm run eval -- --check link-purpose-in-context
+npm run eval -- --model claude-sonnet-5
+```
+
+The labels are stripped from the evidence before anything reaches the model — a harness that leaks the answer measures nothing. Because it costs tokens and is non-deterministic, the eval is not part of `npm test` and does not run in CI.
 
 ---
 
 ## 7. Troubleshooting
 
-| Symptom                                        | Likely cause and fix                                                                                     |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `Executable doesn't exist` on scan             | Playwright's browser isn't installed: `npx playwright install chromium`                                  |
-| Scan hangs then times out                      | Page never fires `load` — check the URL is reachable from where you're running                           |
-| Findings for content that "isn't on the page"  | It is at 1280×800 (the fixed scan viewport), or arrives after load — try `--headed` to see what axe sees |
-| Missing findings on a client-rendered app      | Scan ran before hydration — add `--settle 2000` (or more)                                                |
-| `HTTP 4xx/5xx` warning but a report anyway     | Deliberate: an error page is still a page and its accessibility still matters — but check the URL        |
-| A criterion you expected is missing from scans | Check its level: AAA criteria are out of scope unless you pass `--level AAA`                             |
+| Symptom                                        | Likely cause and fix                                                                                                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Executable doesn't exist` on scan             | Playwright's browser isn't installed: `npx playwright install chromium`. Where that download is blocked, point `A11Y_CHROMIUM_PATH` at a system Chromium |
+| Judgment findings missing entirely             | No API key — the scan prints a notice and runs the deterministic pass alone. Set `ANTHROPIC_API_KEY`                                                     |
+| `Warning: Check ... skipped`                   | That check reached no verdict (refusal, network error, or bad response). The rest of the report is valid                                                 |
+| Scan hangs then times out                      | Page never fires `load` — check the URL is reachable from where you're running                                                                           |
+| Findings for content that "isn't on the page"  | It is at 1280×800 (the fixed scan viewport), or arrives after load — try `--headed` to see what axe sees                                                 |
+| Missing findings on a client-rendered app      | Scan ran before hydration — add `--settle 2000` (or more)                                                                                                |
+| `HTTP 4xx/5xx` warning but a report anyway     | Deliberate: an error page is still a page and its accessibility still matters — but check the URL                                                        |
+| A criterion you expected is missing from scans | Check its level: AAA criteria are out of scope unless you pass `--level AAA`                                                                             |
 
 ---
 

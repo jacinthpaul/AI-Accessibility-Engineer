@@ -57,6 +57,7 @@
     "build:wcag": "tsx scripts/build-wcag-data.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@axe-core/playwright": "^4.12.1",
     "commander": "^14.0.1",
     "playwright": "^1.62.1"

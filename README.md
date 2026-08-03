@@ -8,7 +8,7 @@ Automated tools reliably catch roughly 30–45% of WCAG success criteria. The re
 >
 > **The deterministic scanner works.** `a11y-engineer --url <url>` runs axe-core against WCAG 2.2 and reports findings — no API key required.
 >
-> **The judgment pass does not exist yet** (Phase 2), so the headline feature of this project is still unbuilt. See [Roadmap](#roadmap).
+> **The judgment pass runs its first two checks** (alt-text meaningfulness and link purpose) when `ANTHROPIC_API_KEY` is set. The remaining checks land in Phase 3. See [Roadmap](#roadmap).
 
 ## Why another accessibility tool
 
@@ -128,7 +128,11 @@ $ a11y-engineer --url file:///path/to/fixtures/violations.html
 | `--headed`               | Run with a visible browser window                             |
 | `--settle <ms>`          | Extra wait after load, for client-rendered pages              |
 
-`--model` and `--budget` are accepted but inert until the judgment pass lands. Passing `--judgment` prints a notice saying so rather than silently ignoring it.
+The judgment pass runs by default when `ANTHROPIC_API_KEY` is set. Without a key the scan prints a notice and runs the deterministic pass alone, rather than failing or pretending it ran. `--no-judgment` skips it explicitly.
+
+If a check cannot produce a verdict — the model refused, the call failed, the response did not match the schema — the scan says which check was skipped and why. A gap in coverage is reported, never guessed at.
+
+Set `A11Y_CHROMIUM_PATH` to drive a system Chromium instead of the one Playwright downloads, for locked-down CI or containers with a preinstalled browser.
 
 ### What a clean result means
 
@@ -152,15 +156,15 @@ capture ──▶ deterministic pass ──▶ judgment pass ──▶ score ─
 
 **Judgment pass** — the differentiator. Each check is narrow and criterion-specific, not "here's a page, find problems":
 
-| Check                            | Criterion      |
-| -------------------------------- | -------------- |
-| Alt text meaningfulness          | 1.1.1          |
-| Decorative vs informative images | 1.1.1          |
-| Link purpose in context          | 2.4.4          |
-| Heading structure semantics      | 1.3.1 / 2.4.6  |
-| Reading order vs visual order    | 1.3.2          |
-| Focus visibility                 | 2.4.7 / 2.4.11 |
-| Control name quality             | 4.1.2          |
+| Check                            | Criterion      | Status   |
+| -------------------------------- | -------------- | -------- |
+| Alt text meaningfulness          | 1.1.1          | ✅ Built |
+| Link purpose in context          | 2.4.4          | ✅ Built |
+| Decorative vs informative images | 1.1.1          | Phase 3  |
+| Heading structure semantics      | 1.3.1 / 2.4.6  | Phase 3  |
+| Reading order vs visual order    | 1.3.2          | Phase 3  |
+| Focus visibility                 | 2.4.7 / 2.4.11 | Phase 3  |
+| Control name quality             | 4.1.2          | Phase 3  |
 
 Four rules keep it trustworthy, and they are enforced in code rather than requested in a prompt:
 
@@ -215,14 +219,27 @@ CI runs format, lint, typecheck, build, and tests on Node 20, 22, and 24.
 
 `clean.html` matters as much as `violations.html`. A scanner that invents problems costs a developer the time to disprove each one, which is worse than missing them.
 
+`fixtures/eval/` holds the labelled pages the eval harness scores against. Every candidate element carries `data-eval-label="violation"` or `"ok"`, and the harness strips those labels before anything reaches the model.
+
+### Measuring the judgment checks
+
+```bash
+export ANTHROPIC_API_KEY=...
+npm run eval                                  # every check
+npm run eval -- --check alt-text-meaningful   # one check
+npm run eval -- --model claude-sonnet-5       # compare models
+```
+
+The harness reports precision, recall, and F1 per check, and prints every disagreement with the model's own rationale — which is what makes a bad prompt debuggable rather than merely visible. It costs API tokens and is non-deterministic, so it is not part of `npm test` and does not run in CI.
+
 ## Roadmap
 
 | Phase | Scope                                                              | Status  |
 | ----- | ------------------------------------------------------------------ | ------- |
 | 0     | Foundations: finding model, WCAG grounding data, CLI skeleton, CI  | ✅ Done |
 | 1     | Capture + deterministic pass + `pretty`/`json` reporters           | ✅ Done |
-| 2     | Judgment pass (2 checks) + eval harness reporting precision/recall | Next    |
-| 3     | Remaining judgment checks                                          |         |
+| 2     | Judgment pass (2 checks) + eval harness reporting precision/recall | ✅ Done |
+| 3     | Remaining judgment checks                                          | Next    |
 | 4     | SARIF reporter + GitHub Action                                     |         |
 | 5     | Docs, demo, first npm release                                      |         |
 

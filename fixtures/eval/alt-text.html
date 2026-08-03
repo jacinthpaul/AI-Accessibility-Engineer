@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Eval fixture: alt text meaningfulness (WCAG 1.1.1)</title>
+  </head>
+  <body>
+    <!--
+      Labelled ground truth for the alt-text-meaningful judgment check.
+      data-eval-label="violation" — the alt text fails as a text alternative.
+      data-eval-label="ok"        — the alt text is an acceptable substitute.
+      The label attribute is read by the eval harness only; it is never shown to the model.
+    -->
+    <main>
+      <h1>Quarterly report</h1>
+
+      <!-- Violations: filenames, placeholders, generic noise -->
+      <p>
+        <img
+          src="/uploads/IMG_20240612_143022.jpg"
+          alt="IMG_20240612_143022.jpg"
+          data-eval-label="violation"
+        />
+        Our team at the annual retreat.
+      </p>
+      <p>
+        <img src="/assets/chart-q3.png" alt="image" data-eval-label="violation" />
+        Revenue grew steadily across the quarter.
+      </p>
+      <p>
+        <img src="/assets/hero-final-v2.png" alt="hero-final-v2" data-eval-label="violation" />
+      </p>
+      <p>
+        <img src="/img/team.png" alt="photo" data-eval-label="violation" />
+        The engineering team.
+      </p>
+      <figure>
+        <img src="/img/graph1.png" alt="graphic" data-eval-label="violation" />
+        <figcaption>Support ticket volume by month, January through June.</figcaption>
+      </figure>
+
+      <!-- OK: descriptive alternatives, short but meaningful names -->
+      <p>
+        <img
+          src="/assets/q3-revenue.png"
+          alt="Bar chart: Q3 revenue up 12% year over year, led by the EU region"
+          data-eval-label="ok"
+        />
+      </p>
+      <header>
+        <img src="/img/logo.svg" alt="Acme Corporation logo" data-eval-label="ok" />
+      </header>
+      <p>
+        <img
+          src="/img/ceo.jpg"
+          alt="Portrait of CEO Maria Alvarez speaking at the 2024 shareholder meeting"
+          data-eval-label="ok"
+        />
+      </p>
+      <p>
+        <img src="/img/warning.svg" alt="Warning" data-eval-label="ok" />
+        This action cannot be undone.
+      </p>
+      <figure>
+        <img
+          src="/img/office-map.png"
+          alt="Floor plan of the third floor showing meeting rooms A through D along the north wall"
+          data-eval-label="ok"
+        />
+        <figcaption>Third floor layout.</figcaption>
+      </figure>
+    </main>
+  </body>
+</html>

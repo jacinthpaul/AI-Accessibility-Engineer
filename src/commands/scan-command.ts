@@ -4,6 +4,7 @@
 import { writeFile } from 'node:fs/promises';
 
 import type { ConformanceLevel, Severity } from '../findings.js';
+import { AnthropicModelClient } from '../judgment/model.js';
 import { renderJson } from '../report/json.js';
 import { renderPretty } from '../report/pretty.js';
 import { scan, shouldFail } from '../scan.js';
@@ -52,10 +53,15 @@ export async function runScanCommand(options: ScanCommandOptions): Promise<numbe
     return 2;
   }
 
-  // The judgment pass arrives in Phase 2. Say so rather than silently ignoring the flag —
-  // a user who asked for it should not believe they got it.
-  if (options.judgment === true) {
-    console.error('Note: the judgment pass is not implemented yet (Phase 2).');
+  // The judgment pass needs an API key. `--judgment` is the default, so a missing key
+  // downgrades to the deterministic pass with a note rather than failing the scan —
+  // but the user must not believe they got a pass they did not.
+  const wantJudgment = options.judgment !== false;
+  const hasKey =
+    process.env.ANTHROPIC_API_KEY !== undefined || process.env.ANTHROPIC_AUTH_TOKEN !== undefined;
+  const runJudgment = wantJudgment && hasKey;
+  if (wantJudgment && !hasKey) {
+    console.error('Note: ANTHROPIC_API_KEY is not set, so the judgment pass was skipped.');
     console.error('      Running the deterministic axe-core pass only.\n');
   }
 
@@ -63,7 +69,11 @@ export async function runScanCommand(options: ScanCommandOptions): Promise<numbe
   try {
     outcome = await scan(options.url, {
       level,
-      judgment: false,
+      judgment: runJudgment,
+      ...(runJudgment && {
+        judgmentClient: new AnthropicModelClient(options.model ?? 'claude-opus-5'),
+      }),
+      ...(options.budget !== undefined && { budgetUsd: options.budget }),
       ...(options.confidenceFloor !== undefined && { confidenceFloor: options.confidenceFloor }),
       ...(options.headed !== undefined && { headed: options.headed }),
       ...(options.settle !== undefined && { settleMs: options.settle }),
@@ -71,6 +81,11 @@ export async function runScanCommand(options: ScanCommandOptions): Promise<numbe
   } catch (error) {
     console.error(`Scan failed: ${error instanceof Error ? error.message : String(error)}`);
     return 2;
+  }
+
+  // A skipped check is a gap in coverage; the reader must know the report is partial.
+  for (const warning of outcome.judgmentWarnings) {
+    console.error(`Warning: ${warning}`);
   }
 
   const rendered =
