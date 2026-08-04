@@ -2,7 +2,7 @@
 
 Cross-session memory for this project. **Read this first; update it before ending any session that changes project state.** Keep it short — this is a logbook, not documentation (that lives in `README.md` and `docs/USER-GUIDE.md`).
 
-_Last updated: 2026-08-03_
+_Last updated: 2026-08-04_
 
 ## Where we are
 
@@ -11,6 +11,7 @@ _Last updated: 2026-08-03_
 | 0     | Finding model, WCAG grounding data, CLI skeleton, CI         | ✅ Done     |
 | 1     | Capture + deterministic axe pass + `pretty`/`json` reporters | ✅ Done     |
 | 2     | Judgment pass (2 checks) + eval harness (precision/recall)   | ✅ Done     |
+| —     | Claude Code plugin + install-from-GitHub                     | ✅ Done     |
 | 3     | Remaining judgment checks                                    | ⬅️ Next     |
 | 4     | SARIF reporter + GitHub Action                               | Not started |
 | 5     | Docs, demo, first npm release                                | Not started |
@@ -22,8 +23,10 @@ Working today: `a11y-engineer wcag …` (offline lookup) and `a11y-engineer --ur
 - Typecheck, lint, build: pass. **Tests: 116/116 pass**, integration suite included.
 - The integration tests need a browser. Playwright's download is proxy-blocked in the cloud container and its pinned revision (1234) isn't present, so run them against the container's Chromium:
   `A11Y_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npm test`
-- The eval harness has **not** been run — no `ANTHROPIC_API_KEY` was available in the session that built it. Its precision/recall numbers are therefore unmeasured, and the prompts are untuned. **This is the first thing to do next.**
-- Branch: `claude/project-status-check-fge3c3`.
+- The eval harness has **not** been run — no `ANTHROPIC_API_KEY` has been available in any session so far. Its precision/recall numbers are therefore unmeasured, and the prompts are untuned. **This is still the first thing to do when a key exists.**
+- The plugin was verified by installing it: both manifests pass `claude plugin validate --strict`, and `claude plugin details a11y-engineer` shows the skill discovered (~242 tok always-on, ~2.6k on invoke). The skill's _content_ has not been eval-tested against real prompts — that needs subagents and the user's go-ahead.
+- `npx github:jacinthpaul/AI-Accessibility-Engineer` verified end to end from a clean directory: both `wcag 1.4.3` and a full browser scan. This works because of the `prepare` script — **don't remove it**, the skill and the CI snippet both depend on installing straight from GitHub.
+- Working on `main` (branch `claude/project-status-check-fge3c3` was merged and is now identical).
 
 ## Decisions on record
 
@@ -52,5 +55,6 @@ Working today: `a11y-engineer wcag …` (offline lookup) and `a11y-engineer --ur
 
 ## Session log
 
+- **2026-08-04** — Packaged the tool for other developers: `plugin/` (Claude Code plugin with the `accessibility-audit` skill + per-criterion remediation reference) and `.claude-plugin/marketplace.json` so the repo is its own marketplace. Added the `prepare` script so the scanner installs from GitHub without a clone. No API key again, so the eval remains unrun.
 - **2026-08-03** — Added `CLAUDE.md`, `docs/USER-GUIDE.md`, `STATUS.md`. Built Phase 2: judgment infrastructure (`src/judgment/`), the alt-text (1.1.1) and link-purpose (2.4.4) checks, labelled eval fixtures, the eval harness, and 30 new tests. Added `A11Y_CHROMIUM_PATH` so the integration suite can run against a system Chromium.
 - **(earlier)** — `7de7091` Phase 1: deterministic scanner. `1a4a096` Phase 0: foundations, WCAG data, CLI skeleton.

@@ -48,6 +48,7 @@ capture (Playwright) → deterministic pass (axe-core) → judgment pass (LLM)
 - **`src/commands/`** — CLI command handlers; `src/cli.ts` is flag parsing only.
 - **`src/report/`** — reporters consuming `ScanResult`. A clean scan explicitly says it is not a conformance claim.
 - **`eval/run.ts`** — scores checks against labelled fixtures and reports precision/recall. Needs an API key; deliberately outside `npm test` and CI.
+- **`plugin/` + `.claude-plugin/marketplace.json`** — the repo doubles as a Claude Code plugin marketplace. `plugin/skills/accessibility-audit/` carries the judgment _around_ the tool (which report numbers aren't failures, fix causes not instances) rather than restating the README. Validate changes with `claude plugin validate ./plugin --strict`. The skill tells users to run the scanner via `npx github:…`, which only works because of the `prepare` script in `package.json` — don't remove it.
 
 ## Conventions and constraints
 
