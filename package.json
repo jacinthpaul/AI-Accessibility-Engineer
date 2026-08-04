@@ -53,6 +53,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval": "tsx eval/run.ts",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run build",
     "build:wcag": "tsx scripts/build-wcag-data.ts"
   },

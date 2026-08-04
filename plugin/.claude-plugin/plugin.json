@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "a11y-engineer",
+  "displayName": "AI Accessibility Engineer",
+  "version": "0.1.0",
+  "description": "Scan web pages for WCAG 2.2 failures with axe-core plus an LLM judgment pass, and fix what it finds.",
+  "author": {
+    "name": "Jacinth Paul",
+    "url": "https://github.com/jacinthpaul"
+  },
+  "homepage": "https://github.com/jacinthpaul/AI-Accessibility-Engineer#readme",
+  "repository": "https://github.com/jacinthpaul/AI-Accessibility-Engineer",
+  "license": "Apache-2.0",
+  "keywords": ["accessibility", "a11y", "wcag", "wcag22", "axe-core", "audit", "eaa"]
+}

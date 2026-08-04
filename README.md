@@ -26,16 +26,34 @@ It runs as a CLI, using **your own API key** — a GitHub Action follows in Phas
 
 ## Install
 
-Not published to npm yet. To run from source:
+Not published to npm yet, but installable straight from GitHub — the package builds itself on install:
+
+```bash
+npx --yes github:jacinthpaul/AI-Accessibility-Engineer --url http://localhost:3000
+```
+
+To run from a clone instead:
 
 ```bash
 git clone https://github.com/jacinthpaul/AI-Accessibility-Engineer.git
 cd AI-Accessibility-Engineer
-npm install
-npm run build
+npm install          # builds automatically via the `prepare` script
 ```
 
 Then invoke it with `node dist/cli.js`, or `npm link` to get an `a11y-engineer` command on your PATH.
+
+### Use it inside Claude Code
+
+This repo doubles as a [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces), so Claude can run scans and fix what they find:
+
+```
+/plugin marketplace add jacinthpaul/AI-Accessibility-Engineer
+/plugin install a11y-engineer@a11y-tools
+```
+
+That installs an `accessibility-audit` skill which triggers whenever accessibility, WCAG, contrast, alt text, or screen readers come up — including when nobody names the tool. It carries the interpretation rules that stop a report being misread (`review` findings are not violations, best-practice issues are not WCAG failures, a clean scan is not conformance) and a per-criterion remediation reference. It costs ~240 tokens per session until it fires.
+
+The plugin lives in [`plugin/`](plugin/) and is versioned with the scanner.
 
 ## Usage
 
